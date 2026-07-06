@@ -169,6 +169,9 @@ section{padding:64px 0 8px}
 .tight li::before{content:"–";position:absolute;left:0;color:var(--c0);font-weight:600}
 .k{font-weight:600}
 code.i{font:500 .84em var(--mono);background:var(--c0-soft);color:var(--c0-deep);padding:1px 6px;border-radius:5px}
+.repo{display:inline-block;margin-top:16px;font:500 .74rem var(--mono);letter-spacing:.02em;color:var(--c0-deep);border:1px solid var(--line);padding:6px 13px;border-radius:8px;transition:border-color .2s,background .2s}
+.repo:hover{border-color:var(--c0);background:var(--c0-soft)}
+.repo::before{content:"◈ ";color:var(--c0)}
 
 /* ============ 지식 ============ */
 .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -305,7 +308,7 @@ footer{
     </div>
     <div class="srow rv">
       <div class="lb">DEEP LEARNING</div>
-      <div class="chips"><span class="chip">PyTorch</span><span class="chip">TensorFlow / Keras</span><span class="chip">LSTM</span><span class="chip">Transformer</span><span class="chip">EGNN (Equivariant GNN)</span><span class="chip">GNN</span><span class="chip">Self-distillation (DINO/SwAV)</span><span class="chip">LLM 파인튜닝 (QLoRA)</span></div>
+      <div class="chips"><span class="chip">PyTorch</span><span class="chip">TensorFlow / Keras</span><span class="chip">LSTM</span><span class="chip">Transformer</span><span class="chip">EGNN (Equivariant GNN)</span><span class="chip">GNN</span><span class="chip">Self-supervised consistency (EMA·centering)</span><span class="chip">LLM 파인튜닝 (QLoRA)</span></div>
     </div>
     <div class="srow rv">
       <div class="lb">TIME SERIES / STATS</div>
@@ -330,43 +333,87 @@ footer{
       <span class="en">PROJECTS</span><span class="rule"></span>
     </div>
 
-    <!-- P1 -->
+    <!-- ====================================================================
+         검증 상태 메모 (2026-07 대조 결과)
+         · P1 식음업장: 검증됨. repo debuuusy/Lg-aimers-7-std + DACON 리더보드.
+           온라인 해커톤 817팀 중 138등(상위 16.9%), Private SMAPE 0.5187, 본선
+           미진출. 5인 팀. 본인 기여=전처리·피처/부스팅·SLSQP/AutoGluon(LSTM 팀원).
+         · P3 RNA: 코드로 확인(EGNN·염기쌍/wobble·Kabsch·TBM·confidence·FP16).
+           단, Kaggle 최종 순위(분모)는 여전히 미확인 → 채워 넣을 것.
+         · P2 119 신고 / P5 DeepRacer: 저장소·참가 이력 어디에도 없음. 성적 미검증.
+         · 미반영이나 검증된 실제 성적: 토스 CTR 163/709(상위 23%, 2인),
+           제2회 Medical AI 100/477(상위 21%, 솔로). 반영 검토 권장.
+         · fastMRI ViT+ETER-Net(재구성): 저장소 존재·문서화 탄탄하나 미반영.
+    ===================================================================== -->
+
+    <!-- P1 : 식음업장 -->
     <article class="prj rv">
       <div class="prj-top">
-        <span class="tag">시계열 · 정형</span><span class="tag">경진대회</span>
-        <span class="tag met">SMAPE 최적화 앙상블</span>
+        <span class="tag">시계열 · 정형</span><span class="tag">LG Aimers 해커톤</span>
+        <span class="tag met">817팀 중 138등 · 상위 16.9%</span>
       </div>
-      <h3>식음업장 매출 수량 예측</h3>
-      <p class="sub">각 영업장–메뉴 조합에 대해 향후 7일간의 매출 수량을 예측하는 시계열 + 표형(tabular) 문제 · 평가 지표 SMAPE</p>
+      <h3>식음업장 메뉴 수요 예측 (LG Aimers 온라인 해커톤)</h3>
+      <p class="sub">리조트 식음업장의 영업장–메뉴 조합별 향후 7일 수요를 예측하는 시계열 + 표형(tabular) 문제 · 평가 지표 SMAPE · 1,750명 참가, 5인 팀(NOLSTM)</p>
       <div class="rows">
         <div class="row"><div class="lb">STACK</div>
-          <div><code class="i">CatBoost</code> <code class="i">LightGBM</code> <code class="i">XGBoost</code> <code class="i">Prophet</code> <code class="i">Optuna</code> <code class="i">PyTorch (LSTM)</code> <code class="i">AutoGluon</code> <code class="i">GPU 가속</code></div>
+          <div><code class="i">CatBoost</code> <code class="i">LightGBM</code> <code class="i">XGBoost</code> <code class="i">Prophet</code> <code class="i">Optuna</code> <code class="i">AutoGluon-TS</code> <code class="i">SLSQP</code> <code class="i">GPU</code></div>
         </div>
-        <div class="row"><div class="lb">전처리</div>
+        <div class="row"><div class="lb">핵심 전략</div>
           <ul class="tight">
-            <li>한국 공휴일(2023–2025) + 주말 + "끼인 평일"을 <span class="k">is_holiday</span>로 라벨링</li>
-            <li>이상치 탐지: STL, Z-score, IQR, Isolation Forest, Tweedie GLM, ADTK(Threshold/Seasonal) 비교 적용</li>
-            <li>보간: linear / spline / time / rolling mean 비교 후 <span class="k">RMSE 최소 방식 채택</span>, 평일·휴일 분리 처리로 계절성 분리</li>
-            <li>공휴일·요일·행사(화담숲 오픈 여부) + 업장 더미/집계 피처를 train/test에 결합</li>
-            <li>부스팅용 특성: 룩백 28일 / 예측 7일, 롤링 통계(mean·std·last), 요일·공휴일·채널별 통계</li>
+            <li><span class="k">피처</span>: 28일 룩백 롤링(mean·std·last·weekday), 공휴일·"끼인 평일" 라벨, <span class="k">외부데이터 결합</span>(날씨 ASOS/AWS·축제·검색량·SNS 버즈)</li>
+            <li><span class="k">모델</span>: CatBoost/LGBM/XGB <span class="k">다중출력</span> 앙상블, count 데이터에 <span class="k">Poisson 목적함수</span> + 커스텀 SMAPE</li>
+            <li><span class="k">앙상블</span>: <span class="k">SLSQP로 합=1 제약 하 블렌딩 가중치 최적화</span>(단순 평균 대비 차별점) + 예측 반올림</li>
           </ul>
         </div>
-        <div class="row"><div class="lb">모델링</div>
+        <div class="row"><div class="lb">결과</div>
           <ul class="tight">
-            <li>CatBoost(MultiRMSE) + LightGBM/XGBoost 다중출력 래퍼 <span class="k">앙상블</span></li>
-            <li><span class="k">SLSQP 기반 가중치 최적화</span>로 합 제약(=1) 하에 SMAPE를 최소화하는 블렌딩 가중치 탐색</li>
-            <li>Prophet 예측을 피처로 주입한 버전 / 미포함 버전 각각 실험</li>
-            <li>Optuna로 CatBoost(iterations·depth·lr) 탐색, XGBoost/LightGBM은 Tweedie·Poisson 목적함수 실험</li>
-            <li>커스텀 SMAPE 목적함수 직접 구현</li>
+            <li><span class="k">817팀 중 138등 (상위 16.9%)</span> · Private SMAPE <span class="k">0.5187</span></li>
+            <li>baseline 0.711 → <span class="k">약 27% 개선</span> · 1위 0.437(상위권 0.437~0.445)과는 격차 있음 · 본선 미진출</li>
           </ul>
         </div>
-        <div class="row"><div class="lb">배운 점</div>
-          <div>다중출력 부스팅 앙상블 설계, 목적함수·손실 커스터마이징, 최적화 기반 블렌딩 가중치 탐색 경험.</div>
+        <div class="row"><div class="lb">기여·한계</div>
+          <div>5인 팀 중 <span class="k">전처리·피처 / 부스팅·SLSQP 블렌딩 / AutoGluon</span> 담당(LSTM은 팀원 — 팀명 "NOLSTM"의 유래). 한계: 검증에 랜덤 분할을 써 시계열 data leakage 위험 → 다음엔 <span class="k">시간 기반 분할(rolling-origin)</span>로 개선 예정.</div>
         </div>
       </div>
+      <a class="repo" href="https://github.com/debuuusy/Lg-aimers-7-std" target="_blank" rel="noopener">저장소 GitHub ↗ (팀 repo)</a>
     </article>
 
-    <!-- P2 -->
+    <!-- P2 : fastMRI (연구, 진행 중) -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">연구 프로젝트</span><span class="tag">MRI 복원 · 진행 중</span>
+        <span class="tag met">SSIM 0.892 · 496M U-Net 추월</span>
+      </div>
+      <h3>가속 MRI 영상 복원 — ViT 인코더 + Mamba/GRU 디코더</h3>
+      <p class="sub">fastMRI brain multicoil의 R=4 언더샘플 k-space에서 영상을 복원하는 솔로 연구 · ViT 인코더에 디코더만 GRU(ETER) vs Mamba(SS2D)로 교체해 통제 비교 · 평가 지표 SSIM/PSNR</p>
+      <div class="rows">
+        <div class="row"><div class="lb">STACK</div>
+          <div><code class="i">PyTorch</code> <code class="i">ViT</code> <code class="i">Mamba (SS2D)</code> <code class="i">Bi-GRU (ETER-Net)</code> <code class="i">SSIM / PSNR</code> <code class="i">wandb</code></div>
+        </div>
+        <div class="row"><div class="lb">접근</div>
+          <ul class="tight">
+            <li>공통 ViT 인코더 + <span class="k">디코더만 GRU vs Mamba로 교체</span>해 아키텍처 변수를 통제한 정밀 비교 설계</li>
+            <li>R=4 equispaced 언더샘플링 · L1 + (1−SSIM) 손실 · 8GB GPU 제약 하 <span class="k">gradient checkpointing</span></li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">결정적 인사이트</div>
+          <div><span class="k">커스텀 SSIM 평가 버그 발견·수정</span> — <code class="i">val_range</code> 처리로 SSIM이 인위적으로 낮게 측정되던 것을 skimage 표준으로 재평가하자 <span class="k">0.7227 → 0.8584로 도약하고 아키텍처 랭킹까지 반전</span>. "측정 도구를 먼저 검증한다"를 실증.</div>
+        </div>
+        <div class="row"><div class="lb">결과</div>
+          <ul class="tight">
+            <li>320 트랙: SS2D-ViT full-eval <span class="k">SSIM 0.8924</span> vs pretrained U-Net <span class="k">0.8858</span> — <span class="k">훨씬 작은 모델로 SSIM 추월</span>(PSNR 마진은 작음, 정직 표기)</li>
+            <li>384 트랙: ViT-Base(114.8M) ETER/SS2D <span class="k">near-tie</span> SSIM_m ~0.908 · composite 0.9127</li>
+            <li>TTA·앙상블은 시도했으나 임계 미달로 <span class="k">모두 negative</span>(정직)</li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">기여·상태</div>
+          <div>솔로. 본인 = <span class="k">ViT↔GRU/Mamba 융합 디코더 · R=4 데이터 파이프라인 · 학습/평가/ablation 인프라 · 평가 버그 수정</span>(ViT·GRU·Mamba·MAE 코어는 외부). <span class="k">진행 중</span> — DC 블록·blur 완화가 다음 과제.</div>
+        </div>
+      </div>
+      <a class="repo" href="https://github.com/tkdwl05/fastmri_ViT_with_eternet" target="_blank" rel="noopener">저장소 GitHub ↗</a>
+    </article>
+
+    <!-- P3 : 119 신고 -->
     <article class="prj rv">
       <div class="prj-top">
         <span class="tag">시계열 · 딥러닝</span><span class="tag">기상청 빅데이터 콘테스트</span>
@@ -402,31 +449,42 @@ footer{
       </div>
     </article>
 
-    <!-- P3 -->
+    <!-- P4 : RNA -->
     <article class="prj rv">
       <div class="prj-top">
         <span class="tag">그래프 딥러닝</span><span class="tag">Kaggle</span>
-        <span class="tag met">einsum 벡터화 약 ×100 가속</span>
+        <!-- TODO(검증 필요): 실제 최종 순위(분모 포함)·달성 TM-Score·메달 여부를 채우세요.
+             예) "1,500팀 중 상위 X% · Private TM-Score 0.xx". 현재는 대회 지표만 표기. -->
+        <span class="tag met">TM-Score · Best-of-5</span>
       </div>
-      <h3>3D 좌표 예측 — 동변성 그래프 신경망(EGNN)</h3>
-      <p class="sub">구조화된 입력으로부터 3D 좌표를 예측하는 Kaggle 경진대회 · 회전·이동에 불변한 예측 파이프라인을 직접 설계</p>
+      <h3>Stanford Ribonanza RNA Folding 2 — RNA 3D 구조 예측</h3>
+      <p class="sub">RNA 염기 서열에서 각 잔기 C1&#39; 원자의 (x,y,z) 좌표를 예측하는 Kaggle 경진대회 · 평가 지표 TM-Score(Best-of-5) · 회전·이동에 불변한 예측 파이프라인을 직접 설계</p>
       <div class="rows">
-        <div class="row"><div class="lb">접근</div>
+        <div class="row"><div class="lb">아키텍처</div>
           <ul class="tight">
             <li><span class="k">EGNN(동변성 GNN)</span> 기반으로 좌표의 회전·이동에 불변한 예측 구조 설계</li>
-            <li>DINO/SwAV 스타일 <span class="k">self-distillation</span>(자기지도학습)을 결합한 학습 파이프라인</li>
-            <li>다중 헤드 좌표 예측 + confidence 추정, <span class="k">best-of-K 근사</span></li>
-            <li>혼합정밀도(FP16) 최적화, 시간 예산 기반 조기 중단으로 대회 시간 제한 대응</li>
-            <li>핵심 연산을 순수 Python 반복문에서 <span class="k">np.einsum 벡터화로 약 100배 가속</span></li>
+            <li>염기쌍 확률(<span class="k">A-U · C-G · G-U wobble</span>)을 그래프 edge 특징으로 활용</li>
+            <li>다중 헤드 좌표 예측 + confidence 추정, <span class="k">softmin 기반 best-of-5</span> 근사</li>
+            <li>다층 손실: <span class="k">Kabsch RMSD</span> + edge-distance + repulsion + variance matching + confidence</li>
+            <li><span class="k">EMA 타깃 + centering</span> 기반 self-supervised consistency 정규화(DINO 계열 아이디어 차용)</li>
+            <li>TBM(Template-Based Modeling) 하이브리드 추론 결합</li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">엔지니어링</div>
+          <ul class="tight">
+            <li>혼합정밀도 학습(autocast/GradScaler), 손실은 FP32로 계산해 안정화</li>
+            <li>Kabsch SVD <span class="k">Tikhonov 정규화</span>·<code class="i">nan_to_num</code>·tanh 좌표 제한으로 NaN/Inf 방지</li>
+            <li><span class="k">20+ 버전(v2 → v26) 반복</span>으로 손실·아키텍처를 체계적으로 개선</li>
           </ul>
         </div>
         <div class="row"><div class="lb">배운 점</div>
-          <div>동변성 그래프 신경망, 자기지도학습을 지도학습의 auxiliary loss로 결합하는 설계, 대규모 파이프라인의 수치 안정성과 시간 예산 관리.</div>
+          <div>동변성 그래프 신경망, 자기지도 아이디어를 지도학습의 auxiliary loss로 결합하는 설계, 대규모 파이프라인의 수치 안정성과 시간 예산 관리.</div>
         </div>
       </div>
+      <a class="repo" href="https://github.com/tkdwl05/stanford-rna-3d-folding-2" target="_blank" rel="noopener">저장소 GitHub ↗</a>
     </article>
 
-    <!-- P4 -->
+    <!-- P5 : 사주라 -->
     <article class="prj rv">
       <div class="prj-top">
         <span class="tag">캡스톤 디자인</span><span class="tag">AI 에이전트</span>
@@ -443,9 +501,10 @@ footer{
           </ul>
         </div>
       </div>
+      <a class="repo" href="https://github.com/tkdwl05/Sajura" target="_blank" rel="noopener">저장소 GitHub ↗</a>
     </article>
 
-    <!-- P5 -->
+    <!-- P6 : DeepRacer -->
     <article class="prj rv">
       <div class="prj-top">
         <span class="tag">강화학습</span><span class="tag">자율주행 시뮬레이션</span>
@@ -510,8 +569,9 @@ footer{
         <ul class="tight">
           <li><span class="k">시퀀스</span> — LSTM/GRU, Attention, Transformer</li>
           <li><span class="k">그래프</span> — GNN, EGNN(동변성), pair-aware message passing</li>
-          <li><span class="k">자기지도학습</span> — DINO/SwAV 스타일 self-distillation (EMA teacher, centering, sharpening)</li>
+          <li><span class="k">자기지도 정규화</span> — EMA 타깃 + centering 기반 consistency (DINO 계열 아이디어 차용)</li>
           <li><span class="k">3D 좌표 예측</span> — pair 표현, confidence 추정, best-of-K 예측</li>
+          <li><span class="k">역문제·복원</span> — ViT 인코더 + Mamba(SS2D)·Bi-GRU 디코더, R=4 k-space 언더샘플링 MRI 복원(SSIM/PSNR)</li>
         </ul>
       </div>
 
@@ -543,23 +603,13 @@ footer{
       </div>
       <div class="scard rv">
         <h3>폭넓은 도메인</h3>
-        <p>정형/시계열(매출·119 신고) + 고급 딥러닝(동변성 GNN·3D 좌표 예측) + 강화학습(DeepRacer).</p>
-        <div class="ev">TABULAR · TIME SERIES · GNN · RL</div>
+        <p>정형/시계열(매출·119 신고) + 딥러닝(동변성 GNN·3D 좌표 예측·의료영상 복원) + 강화학습(DeepRacer).</p>
+        <div class="ev">TABULAR · TIME SERIES · GNN · MRI RECON · RL</div>
       </div>
       <div class="scard rv">
         <h3>엔지니어링 감각</h3>
         <p>수치 안정성, 벡터화 최적화, 시간 예산 관리 등 실전 대회 노하우.</p>
-        <div class="ev">einsum ×100 가속 · FP16 · 시간 예산 조기 중단</div>
-      </div>
-      <div class="scard rv">
-        <h3>꾸준한 개선</h3>
-        <p>버전을 거듭하며 체계적으로 코드를 발전시킨 이력.</p>
-        <div class="vchain">
-          <span class="vnode">v11</span><span class="varr">→</span>
-          <span class="vnode">v12</span><span class="varr">→</span>
-          <span class="vnode">v30</span><span class="varr">→</span>
-          <span class="vnode last">v32</span>
-        </div>
+        <div class="ev">FP16 mixed precision · Kabsch Tikhonov 정규화 · NaN/Inf 방지</div>
       </div>
     </div>
   </div>

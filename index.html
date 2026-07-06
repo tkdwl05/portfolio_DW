@@ -70,6 +70,16 @@ a{color:inherit;text-decoration:none}
 }
 .hero h1 .fc{color:var(--c0)}
 .lede{max-width:680px;color:var(--muted);font-size:1.02rem;margin-bottom:28px}
+/* 프로필 — 히어로 상단 신원 */
+.profile{display:flex;align-items:center;gap:20px;margin-bottom:32px}
+.avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--c0);padding:3px;background:var(--card);box-shadow:0 4px 16px rgba(16,27,43,.08);flex-shrink:0}
+.pname{font-size:1.5rem;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.pname .en{font:500 .8rem var(--mono);color:var(--muted);letter-spacing:.04em;margin-left:9px}
+.paffil{color:var(--muted);font-size:.93rem;margin-top:4px}
+.pmeta{font:500 .76rem var(--mono);color:var(--c0-deep);margin-top:8px}
+.pmeta a{transition:color .2s}
+.pmeta a:hover{color:var(--c1-deep)}
+@media (max-width:680px){.profile{flex-direction:column;align-items:flex-start;gap:14px}}
 .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:44px}
 .btn{
   display:inline-block;padding:11px 22px;border-radius:10px;
@@ -254,6 +264,14 @@ footer{
 <!-- ============ 히어로 ============ -->
 <main id="top">
 <div class="wrap hero">
+  <div class="profile rv">
+    <img class="avatar" src="profile.jpg" alt="정동욱 프로필 사진" width="96" height="96">
+    <div>
+      <div class="pname">정동욱 <span class="en">Dongwook Jeong</span></div>
+      <div class="paffil">홍익대학교 소프트웨어융합학과 4학년 · AI/ML 엔지니어 지망</div>
+      <div class="pmeta"><a href="https://github.com/tkdwl05" target="_blank" rel="noopener">github.com/tkdwl05</a> · <a href="mailto:tkdwl05@gmail.com">tkdwl05@gmail.com</a></div>
+    </div>
+  </div>
   <p class="eyebrow rv">AI / ML ENGINEER — TIME SERIES · DEEP LEARNING</p>
   <h1 class="rv">문제 정의에서 앙상블까지,<br>예측의 <span class="fc">전 과정</span>을 설계합니다</h1>
   <p class="lede rv">시계열·정형 데이터 예측부터 그래프 딥러닝 기반 3D 좌표 예측까지 — 경진대회를 중심으로 문제 정의 → 데이터 전처리 → 모델링 → 튜닝 → 앙상블의 전 과정을 직접 설계하고 개선해 온 AI/ML 엔지니어 지망생입니다.</p>

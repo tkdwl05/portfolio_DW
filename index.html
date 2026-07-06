@@ -212,6 +212,7 @@ code.i{font:500 .84em var(--mono);background:var(--c0-soft);color:var(--c0-deep)
 .lbtn:hover{border-color:var(--c0);color:var(--c0-deep);transform:translateY(-1px)}
 .lbtn.pri{background:var(--c0);border-color:var(--c0);color:#fff}
 .lbtn.pri:hover{background:var(--c0-deep);color:#fff}
+.lbtn.pri.copied,.lbtn.pri.copied:hover{background:var(--c1-deep);border-color:var(--c1-deep);color:#fff;transform:none}
 
 footer{
   margin-top:72px;border-top:1px dashed var(--line);
@@ -623,7 +624,7 @@ footer{
       <h2>다음 예측을 함께 만들 준비가 되어 있습니다</h2>
       <p>각 프로젝트의 코드·시각화 자료는 별도 페이지/저장소에서 확인하실 수 있습니다.</p>
       <div class="links">
-        <a class="lbtn pri" href="mailto:tkdwl05@gmail.com">이메일 보내기</a>
+        <a class="lbtn pri" id="copyEmail" href="mailto:tkdwl05@gmail.com" data-email="tkdwl05@gmail.com" title="tkdwl05@gmail.com — 클릭하면 복사됩니다">이메일 보내기</a>
         <a class="lbtn" href="https://github.com/tkdwl05" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
     </div>
@@ -641,6 +642,34 @@ const io = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
 },{threshold:.12});
 document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+// 이메일 버튼: 클릭 시 주소를 클립보드에 복사 (+ "복사됨!" 피드백)
+(function(){
+  const btn = document.getElementById('copyEmail');
+  if(!btn) return;
+  const label = btn.textContent, email = btn.dataset.email || 'tkdwl05@gmail.com';
+  let t = null;
+  function flash(){
+    btn.textContent = '복사됨! ✓';
+    btn.classList.add('copied');
+    clearTimeout(t);
+    t = setTimeout(function(){ btn.textContent = label; btn.classList.remove('copied'); }, 1500);
+  }
+  function fallback(txt){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;top:-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(email).then(flash).catch(function(){ fallback(email); flash(); });
+    } else { fallback(email); flash(); }
+  });
+})();
 </script>
 </body>
 </html>

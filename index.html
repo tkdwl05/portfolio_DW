@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI/ML 포트폴리오 — 시계열·딥러닝 엔지니어</title>
+<meta name="description" content="시계열·정형 데이터 예측부터 그래프 딥러닝 기반 3D 좌표 예측까지, 예측의 전 과정을 설계하는 AI/ML 엔지니어 포트폴리오">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ 디자인 토큰 ============
+   matplotlib 듀오톤: C0(관측) / C1(예측) */
+:root{
+  --paper:#F4F6F8;
+  --card:#FFFFFF;
+  --ink:#0F1B2B;
+  --muted:#54657A;
+  --line:#D5DDE5;
+  --grid:#E3E9EF;
+  --c0:#1F77B4;          /* observed */
+  --c0-deep:#155A8A;
+  --c0-soft:rgba(31,119,180,.10);
+  --c1:#FF7F0E;          /* forecast — 그래픽 전용 */
+  --c1-deep:#B25400;     /* 텍스트용 오렌지 */
+  --c1-soft:rgba(255,127,14,.13);
+  --radius:14px;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.75;
+  font-size:16px;
+}
+::selection{background:var(--c0-soft)}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--c0);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+/* ============ 상단바 ============ */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(244,246,248,.86);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:9px;font:600 .8rem var(--mono);letter-spacing:.1em}
+.brand .dot{width:9px;height:9px;border-radius:2px;background:var(--c0);box-shadow:14px 0 0 var(--c1)}
+.brand .dot{margin-right:14px}
+.nav{display:flex;gap:22px;font:500 .78rem var(--mono);color:var(--muted)}
+.nav a{transition:color .2s}
+.nav a:hover{color:var(--c0-deep)}
+
+/* ============ 히어로 ============ */
+.hero{padding:76px 0 24px}
+.eyebrow{
+  font:500 .74rem var(--mono);letter-spacing:.16em;
+  color:var(--c1-deep);margin-bottom:18px;
+}
+.hero h1{
+  font-size:clamp(1.9rem,4.6vw,3.15rem);
+  font-weight:700;line-height:1.3;letter-spacing:-.015em;
+  margin-bottom:20px;
+}
+.hero h1 .fc{color:var(--c0)}
+.lede{max-width:680px;color:var(--muted);font-size:1.02rem;margin-bottom:28px}
+.ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:44px}
+.btn{
+  display:inline-block;padding:11px 22px;border-radius:10px;
+  font:500 .86rem var(--sans);transition:all .2s;
+}
+.btn-pri{background:var(--c0);color:#fff}
+.btn-pri:hover{background:var(--c0-deep);transform:translateY(-1px)}
+.btn-gho{border:1px solid var(--line);background:var(--card)}
+.btn-gho:hover{border-color:var(--c0);color:var(--c0-deep)}
+
+/* 히어로 차트 — 관측(파랑) → 예측(주황) */
+.chart{
+  background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 20px 12px;
+}
+.chart svg{display:block;width:100%;height:auto}
+.p-obs{fill:none;stroke:var(--c0);stroke-width:3;stroke-linecap:round}
+.p-fc{fill:none;stroke:var(--c1);stroke-width:3;stroke-linecap:round;stroke-dasharray:7 7}
+.p-band{fill:var(--c1-soft)}
+.p-t0{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4;opacity:.7}
+.p-dot{fill:var(--c0)}
+.ax{font:500 11px var(--mono);fill:var(--muted)}
+.legend{
+  display:flex;gap:22px;flex-wrap:wrap;align-items:center;
+  padding:12px 4px 4px;font:500 .74rem var(--mono);color:var(--muted);
+}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;border-top:3px solid var(--c0);border-radius:2px}
+.sw-fc{border-top-style:dashed;border-top-color:var(--c1)}
+.sw-bd{width:16px;height:10px;border:0;background:var(--c1-soft);border-radius:2px}
+
+/* 애니메이션 — 시스템 설정 존중 */
+@media (prefers-reduced-motion: no-preference){
+  html{scroll-behavior:smooth}
+  .p-obs{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.5s .25s cubic-bezier(.4,0,.2,1) forwards}
+  .p-fc{clip-path:inset(-12% 100% -12% 0);animation:sweep .9s 1.7s ease forwards}
+  .p-band{opacity:0;animation:fadein .8s 2.3s forwards}
+  .p-dot,.p-t0,.t0lb{opacity:0;animation:fadein .6s 1.5s forwards}
+  .rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes sweep{to{clip-path:inset(-12% 0% -12% 0)}}
+@keyframes fadein{to{opacity:1}}
+
+/* ============ 섹션 공통 ============ */
+section{padding:64px 0 8px}
+.shead{display:flex;align-items:baseline;gap:14px;margin-bottom:30px}
+.shead .idx{font:600 .8rem var(--mono);color:var(--c0)}
+.shead h2{font-size:1.5rem;font-weight:700;letter-spacing:-.01em}
+.shead .en{font:500 .72rem var(--mono);letter-spacing:.14em;color:var(--muted)}
+.shead .rule{flex:1;height:1px;background:var(--line);align-self:center}
+
+/* ============ 기술 스택 ============ */
+.srow{
+  display:grid;grid-template-columns:180px 1fr;gap:16px;
+  padding:18px 0;border-top:1px dashed var(--line);
+}
+.srow:last-child{border-bottom:1px dashed var(--line)}
+.srow .lb{font:500 .74rem var(--mono);letter-spacing:.08em;color:var(--muted);padding-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  font:500 .78rem var(--mono);
+  background:var(--card);border:1px solid var(--line);
+  padding:5px 11px;border-radius:8px;
+}
+
+/* ============ 프로젝트 ============ */
+.prj{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px 28px;margin-bottom:20px;
+  transition:border-color .25s,box-shadow .25s,transform .25s;
+}
+.prj:hover{
+  border-color:var(--c0);transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(16,27,43,.07);
+}
+.prj-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{
+  font:500 .7rem var(--mono);letter-spacing:.04em;
+  color:var(--c0-deep);background:var(--c0-soft);
+  padding:3px 9px;border-radius:6px;
+}
+.met{color:var(--c1-deep);background:var(--c1-soft);margin-left:auto}
+.prj h3{font-size:1.22rem;font-weight:700;margin:12px 0 4px;letter-spacing:-.01em}
+.prj .sub{color:var(--muted);font-size:.92rem}
+.rows{margin-top:16px}
+.row{
+  display:grid;grid-template-columns:104px 1fr;gap:18px;
+  padding:13px 0;border-top:1px dashed var(--line);
+  font-size:.94rem;
+}
+.row .lb{font:500 .7rem var(--mono);letter-spacing:.1em;color:var(--muted);padding-top:5px}
+.tight{list-style:none}
+.tight li{position:relative;padding-left:16px;margin:5px 0}
+.tight li::before{content:"–";position:absolute;left:0;color:var(--c0);font-weight:600}
+.k{font-weight:600}
+code.i{font:500 .84em var(--mono);background:var(--c0-soft);color:var(--c0-deep);padding:1px 6px;border-radius:5px}
+
+/* ============ 지식 ============ */
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
+.kcard.wide{grid-column:1/-1}
+.kcard h3{font-size:1.02rem;font-weight:700;margin-bottom:12px}
+.kcard h3::before{content:"■";color:var(--c0);font-size:.6rem;vertical-align:2px;margin-right:9px}
+.kcard .tight{font-size:.92rem;color:#2A3A4E}
+
+/* ============ 강점 ============ */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.scard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
+.scard h3{font-size:1.02rem;font-weight:700;margin-bottom:8px}
+.scard p{font-size:.93rem;color:var(--muted)}
+.ev{font:500 .76rem var(--mono);color:var(--c0-deep);margin-top:14px;letter-spacing:.02em}
+.vchain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.vnode{
+  font:600 .74rem var(--mono);color:var(--c0-deep);
+  background:var(--c0-soft);border:1px solid var(--c0);
+  padding:3px 10px;border-radius:999px;
+}
+.vnode.last{color:var(--c1-deep);background:var(--c1-soft);border-color:var(--c1)}
+.varr{font:500 .8rem var(--mono);color:var(--muted)}
+
+/* ============ 연락처 ============ */
+.ccard{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:52px 32px;text-align:center;
+}
+.ccard h2{font-size:1.6rem;font-weight:700;letter-spacing:-.01em;margin-bottom:10px}
+.ccard p{color:var(--muted);max-width:520px;margin:0 auto 28px;font-size:.96rem}
+.links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lbtn{
+  font:500 .84rem var(--mono);
+  border:1px solid var(--line);background:var(--paper);
+  padding:11px 22px;border-radius:10px;transition:all .2s;
+}
+.lbtn:hover{border-color:var(--c0);color:var(--c0-deep);transform:translateY(-1px)}
+.lbtn.pri{background:var(--c0);border-color:var(--c0);color:#fff}
+.lbtn.pri:hover{background:var(--c0-deep);color:#fff}
+
+footer{
+  margin-top:72px;border-top:1px dashed var(--line);
+  padding:26px 0 52px;
+  font:400 .72rem var(--mono);color:var(--muted);letter-spacing:.02em;
+}
+
+/* ============ 반응형 ============ */
+@media (max-width:860px){
+  .kgrid,.sgrid{grid-template-columns:1fr}
+}
+@media (max-width:680px){
+  .nav{display:none}
+  .hero{padding-top:52px}
+  section{padding:48px 0 6px}
+  .srow{grid-template-columns:1fr;gap:8px;padding:14px 0}
+  .row{grid-template-columns:1fr;gap:4px}
+  .prj{padding:20px}
+  .met{margin-left:0}
+  .shead .en{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="dot"></span>AI/ML PORTFOLIO</a>
+    <nav class="nav">
+      <a href="#stack">기술 스택</a>
+      <a href="#projects">프로젝트</a>
+      <a href="#knowledge">지식</a>
+      <a href="#strengths">강점</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 히어로 ============ -->
+<main id="top">
+<div class="wrap hero">
+  <p class="eyebrow rv">AI / ML ENGINEER — TIME SERIES · DEEP LEARNING</p>
+  <h1 class="rv">문제 정의에서 앙상블까지,<br>예측의 <span class="fc">전 과정</span>을 설계합니다</h1>
+  <p class="lede rv">시계열·정형 데이터 예측부터 그래프 딥러닝 기반 3D 좌표 예측까지 — 경진대회를 중심으로 문제 정의 → 데이터 전처리 → 모델링 → 튜닝 → 앙상블의 전 과정을 직접 설계하고 개선해 온 AI/ML 엔지니어 지망생입니다.</p>
+  <div class="ctas rv">
+    <a class="btn btn-pri" href="#projects">프로젝트 보기</a>
+    <a class="btn btn-gho" href="#contact">연락하기</a>
+  </div>
+
+  <figure class="chart rv">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="관측 시계열에서 7일 예측 구간으로 이어지는 예측 개념 차트">
+      <defs>
+        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M50 0H0V50" fill="none" stroke="var(--grid)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="1000" height="272" fill="url(#grid)"/>
+      <line x1="0" y1="272" x2="1000" y2="272" stroke="var(--line)" stroke-width="1.5"/>
+      <!-- 예측 신뢰 구간 -->
+      <path class="p-band" d="M680,148 C750,128 850,92 990,62 L990,128 C850,146 750,160 680,148 Z"/>
+      <!-- t0 예측 시작선 -->
+      <line class="p-t0" x1="680" y1="26" x2="680" y2="272"/>
+      <text class="ax t0lb" x="680" y="292" text-anchor="middle">t₀ 예측 시작</text>
+      <text class="ax t0lb" x="985" y="292" text-anchor="end">t₀ + 7d</text>
+      <!-- 관측 시계열 -->
+      <path class="p-obs" pathLength="1" d="M40,232 C70,224 88,196 116,201 C144,206 158,238 186,230 C214,222 228,176 256,184 C284,192 300,234 328,222 C356,210 372,158 400,170 C428,182 448,214 476,198 C504,182 520,146 548,157 C576,168 596,196 624,182 C652,168 666,152 680,148"/>
+      <circle class="p-dot" cx="680" cy="148" r="4.5"/>
+      <!-- 예측 -->
+      <path class="p-fc" d="M680,148 C740,136 800,116 860,120 C920,124 960,104 990,96"/>
+    </svg>
+    <figcaption class="legend">
+      <span><i class="sw"></i>관측 시계열</span>
+      <span><i class="sw sw-fc"></i>+7일 예측</span>
+      <span><i class="sw sw-bd"></i>신뢰 구간</span>
+    </figcaption>
+  </figure>
+</div>
+
+<!-- ============ 01 기술 스택 ============ -->
+<section id="stack">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="idx">[01]</span><h2>기술 스택</h2>
+      <span class="en">TECH STACK</span><span class="rule"></span>
+    </div>
+
+    <div class="srow rv">
+      <div class="lb">LANGUAGE / CORE</div>
+      <div class="chips"><span class="chip">Python</span><span class="chip">pandas</span><span class="chip">NumPy</span><span class="chip">scikit-learn</span><span class="chip">Jupyter</span></div>
+    </div>
+    <div class="srow rv">
+      <div class="lb">BOOSTING / TABULAR</div>
+      <div class="chips"><span class="chip">XGBoost</span><span class="chip">LightGBM</span><span class="chip">CatBoost (GPU)</span><span class="chip">Optuna</span><span class="chip">AutoGluon</span></div>
+    </div>
+    <div class="srow rv">
+      <div class="lb">DEEP LEARNING</div>
+      <div class="chips"><span class="chip">PyTorch</span><span class="chip">TensorFlow / Keras</span><span class="chip">LSTM</span><span class="chip">Transformer</span><span class="chip">EGNN (Equivariant GNN)</span><span class="chip">GNN</span><span class="chip">Self-distillation (DINO/SwAV)</span><span class="chip">LLM 파인튜닝 (QLoRA)</span></div>
+    </div>
+    <div class="srow rv">
+      <div class="lb">TIME SERIES / STATS</div>
+      <div class="chips"><span class="chip">Prophet</span><span class="chip">SARIMAX</span><span class="chip">STL 분해</span><span class="chip">시계열 교차검증</span><span class="chip">ACF / PACF</span></div>
+    </div>
+    <div class="srow rv">
+      <div class="lb">PREPROCESSING / FE</div>
+      <div class="chips"><span class="chip">Isolation Forest</span><span class="chip">ADTK</span><span class="chip">결측 보간</span><span class="chip">스케일링</span><span class="chip">롤링·캘린더 피처</span><span class="chip">외부 데이터 결합</span></div>
+    </div>
+    <div class="srow rv">
+      <div class="lb">COLLAB / ETC</div>
+      <div class="chips"><span class="chip">Git / GitHub</span><span class="chip">Notion</span><span class="chip">공공데이터포털 API</span><span class="chip">네이버 데이터랩 API</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 프로젝트 ============ -->
+<section id="projects">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="idx">[02]</span><h2>대표 프로젝트</h2>
+      <span class="en">PROJECTS</span><span class="rule"></span>
+    </div>
+
+    <!-- P1 -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">시계열 · 정형</span><span class="tag">경진대회</span>
+        <span class="tag met">SMAPE 최적화 앙상블</span>
+      </div>
+      <h3>식음업장 매출 수량 예측</h3>
+      <p class="sub">각 영업장–메뉴 조합에 대해 향후 7일간의 매출 수량을 예측하는 시계열 + 표형(tabular) 문제 · 평가 지표 SMAPE</p>
+      <div class="rows">
+        <div class="row"><div class="lb">STACK</div>
+          <div><code class="i">CatBoost</code> <code class="i">LightGBM</code> <code class="i">XGBoost</code> <code class="i">Prophet</code> <code class="i">Optuna</code> <code class="i">PyTorch (LSTM)</code> <code class="i">AutoGluon</code> <code class="i">GPU 가속</code></div>
+        </div>
+        <div class="row"><div class="lb">전처리</div>
+          <ul class="tight">
+            <li>한국 공휴일(2023–2025) + 주말 + "끼인 평일"을 <span class="k">is_holiday</span>로 라벨링</li>
+            <li>이상치 탐지: STL, Z-score, IQR, Isolation Forest, Tweedie GLM, ADTK(Threshold/Seasonal) 비교 적용</li>
+            <li>보간: linear / spline / time / rolling mean 비교 후 <span class="k">RMSE 최소 방식 채택</span>, 평일·휴일 분리 처리로 계절성 분리</li>
+            <li>공휴일·요일·행사(화담숲 오픈 여부) + 업장 더미/집계 피처를 train/test에 결합</li>
+            <li>부스팅용 특성: 룩백 28일 / 예측 7일, 롤링 통계(mean·std·last), 요일·공휴일·채널별 통계</li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">모델링</div>
+          <ul class="tight">
+            <li>CatBoost(MultiRMSE) + LightGBM/XGBoost 다중출력 래퍼 <span class="k">앙상블</span></li>
+            <li><span class="k">SLSQP 기반 가중치 최적화</span>로 합 제약(=1) 하에 SMAPE를 최소화하는 블렌딩 가중치 탐색</li>
+            <li>Prophet 예측을 피처로 주입한 버전 / 미포함 버전 각각 실험</li>
+            <li>Optuna로 CatBoost(iterations·depth·lr) 탐색, XGBoost/LightGBM은 Tweedie·Poisson 목적함수 실험</li>
+            <li>커스텀 SMAPE 목적함수 직접 구현</li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">배운 점</div>
+          <div>다중출력 부스팅 앙상블 설계, 목적함수·손실 커스터마이징, 최적화 기반 블렌딩 가중치 탐색 경험.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P2 -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">시계열 · 딥러닝</span><span class="tag">기상청 빅데이터 콘테스트</span>
+        <span class="tag met">3-Fold RMSE 0.99–7.97</span>
+      </div>
+      <h3>119 신고 건수 예측 — 기상 데이터 융합 LSTM</h3>
+      <p class="sub">부산 소방청 119 신고 건수를 기상 데이터와 결합해 단기 예측 · 지점별 시계열 특성을 반영한 LSTM 회귀 모델</p>
+      <div class="rows">
+        <div class="row"><div class="lb">STACK</div>
+          <div><code class="i">TensorFlow / Keras</code> <code class="i">scikit-learn</code> <code class="i">pandas</code> <code class="i">시계열 전처리</code> <code class="i">교차검증</code> <code class="i">Matplotlib / Seaborn</code></div>
+        </div>
+        <div class="row"><div class="lb">전처리</div>
+          <ul class="tight">
+            <li>기상(ASOS/AWS 2020–2024)과 소방(call119, cat119) 데이터를 지점·날짜/시간 키로 병합</li>
+            <li>결측값 제거/대체, 기상 데이터 보간 및 이상치 탐지</li>
+            <li>스케일링: StandardScaler(기본), RobustScaler(이상치 내성 실험)</li>
+            <li>시계열 윈도잉: lookback=3 → 다음 시점 예측, 입력 형태 <span class="k">(samples, timesteps=3, features=7)</span></li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">모델 구조</div>
+          <div>2층 LSTM + Dense(1) · cell_size 32/64 실험 · Adam(lr=0.001) · MSE loss · 500 epochs</div>
+        </div>
+        <div class="row"><div class="lb">성과</div>
+          <ul class="tight">
+            <li><span class="k">11개 소방서(지점)별 맞춤형 예측 모델</span> 구축</li>
+            <li>지점별 3-Fold 평균 <span class="k">RMSE 0.99 ~ 7.97</span> 달성 — 921번 지점 0.99로 최우수</li>
+            <li>RMSE 분포·히트맵·랭킹·종합 대시보드로 성능 시각화</li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">배운 점</div>
+          <div>다변수 시계열 LSTM 모델링, 지점별 특성 차이 분석, 기상–사회 데이터 융합. 향후 개선 방향으로 TimeSeriesSplit·EarlyStopping 도입, Attention/GRU/Transformer 비교, 부스팅과의 앙상블을 도출.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P3 -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">그래프 딥러닝</span><span class="tag">Kaggle</span>
+        <span class="tag met">einsum 벡터화 약 ×100 가속</span>
+      </div>
+      <h3>3D 좌표 예측 — 동변성 그래프 신경망(EGNN)</h3>
+      <p class="sub">구조화된 입력으로부터 3D 좌표를 예측하는 Kaggle 경진대회 · 회전·이동에 불변한 예측 파이프라인을 직접 설계</p>
+      <div class="rows">
+        <div class="row"><div class="lb">접근</div>
+          <ul class="tight">
+            <li><span class="k">EGNN(동변성 GNN)</span> 기반으로 좌표의 회전·이동에 불변한 예측 구조 설계</li>
+            <li>DINO/SwAV 스타일 <span class="k">self-distillation</span>(자기지도학습)을 결합한 학습 파이프라인</li>
+            <li>다중 헤드 좌표 예측 + confidence 추정, <span class="k">best-of-K 근사</span></li>
+            <li>혼합정밀도(FP16) 최적화, 시간 예산 기반 조기 중단으로 대회 시간 제한 대응</li>
+            <li>핵심 연산을 순수 Python 반복문에서 <span class="k">np.einsum 벡터화로 약 100배 가속</span></li>
+          </ul>
+        </div>
+        <div class="row"><div class="lb">배운 점</div>
+          <div>동변성 그래프 신경망, 자기지도학습을 지도학습의 auxiliary loss로 결합하는 설계, 대규모 파이프라인의 수치 안정성과 시간 예산 관리.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P4 -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">캡스톤 디자인</span><span class="tag">AI 에이전트</span>
+        <span class="tag met">B2B 자동발주 솔루션</span>
+      </div>
+      <h3>AI 자동발주 솔루션 "사주라"</h3>
+      <p class="sub">식음료 소상공인을 위한 AI 자동발주·매출 분석 솔루션 — POS 데이터와 레시피를 매핑해 재고를 자동 추적하고, 날씨·행사 등 외부 변수를 학습한 AI가 재고 부족을 선제 예측해 B2B 식자재 장바구니를 자동 생성하는 자동화 에이전트</p>
+      <div class="rows">
+        <div class="row"><div class="lb">기여</div>
+          <ul class="tight">
+            <li>석·박사급 유사 연구 3건 조사·분석 — 칭화대 <span class="k">TimeXer</span>(외생 변수 통합), 만하임대 특수일 분류 접근, KISTI 기상–매출 LSTM 연계</li>
+            <li>각 연구와의 차별점·개선점·적용 방안 도출</li>
+            <li>종합설계 발표 자료(PPT 아웃라인 + 대본)를 <span class="k">영어·한국어 두 버전</span>으로 기획</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- P5 -->
+    <article class="prj rv">
+      <div class="prj-top">
+        <span class="tag">강화학습</span><span class="tag">자율주행 시뮬레이션</span>
+        <span class="tag met">보상 함수 커스터마이징</span>
+      </div>
+      <h3>AWS DeepRacer — 강화학습 자율주행</h3>
+      <p class="sub">AWS DeepRacer 강화학습 시뮬레이터로 장애물 트랙 주행 모델 개발</p>
+      <div class="rows">
+        <div class="row"><div class="lb">접근</div>
+          <ul class="tight">
+            <li>25% · 50% · 75% 지점의 박스형 장애물(아웃사이드/인사이드/아웃사이드) 배치에 맞춰 <span class="k">waypoint 기반 left/right/center lane</span>과 보상 함수를 커스터마이징</li>
+            <li>단계적 학습 전략과 racing line 최적화 적용</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ 03 지식 ============ -->
+<section id="knowledge">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="idx">[03]</span><h2>딥러닝 · 데이터사이언스 지식</h2>
+      <span class="en">KNOWLEDGE</span><span class="rule"></span>
+    </div>
+
+    <div class="kgrid">
+      <div class="kcard rv">
+        <h3>데이터 전처리 · 피처 엔지니어링</h3>
+        <ul class="tight">
+          <li><span class="k">이상치</span> — STL 분해, Z-score, IQR, Isolation Forest, Tweedie GLM, ADTK 등 복수 기법 비교 적용</li>
+          <li><span class="k">결측·보간</span> — linear/spline/time/rolling mean 비교, RMSE 기준 최적 방식 선택</li>
+          <li><span class="k">스케일링</span> — StandardScaler / RobustScaler 상황별 선택</li>
+          <li><span class="k">캘린더·시계열 피처</span> — 공휴일·주말·"끼인 평일" 라벨링, 롤링 통계, 추세·계절 피처, 이동평균 대비 비율</li>
+          <li><span class="k">외부 데이터 결합</span> — 기상청 API, 네이버 데이터랩, 공공데이터포털(상권/유동인구), 행사·축제 일정</li>
+          <li><span class="k">데이터 검증</span> — 누락 날짜 점검, 0 매출 vs 결측(NaN) 구분, 단위/로그 변환 필요성 확인</li>
+        </ul>
+      </div>
+
+      <div class="kcard rv">
+        <h3>정형 데이터 모델링</h3>
+        <ul class="tight">
+          <li>부스팅 3대장(XGBoost/LightGBM/CatBoost)의 특성 이해와 GPU 가속 활용</li>
+          <li>다중출력 예측, 목적함수 커스터마이징(SMAPE, Tweedie/Poisson)</li>
+          <li>앙상블·블렌딩(SLSQP 가중치 최적화), Optuna 하이퍼파라미터 탐색</li>
+          <li>SHAP 기반 피처 중요도 분석</li>
+        </ul>
+      </div>
+
+      <div class="kcard rv">
+        <h3>시계열 예측</h3>
+        <ul class="tight">
+          <li>베이스라인(Naive, Seasonal Naive, SARIMAX, Prophet) → 부스팅 → 딥러닝(N-BEATS, LSTM) 비교 체계</li>
+          <li>시계열 교차검증(TimeSeriesSplit)으로 data leakage 방지</li>
+          <li>horizon별(1·2·3일) 성능 저하 패턴 분석</li>
+        </ul>
+      </div>
+
+      <div class="kcard rv">
+        <h3>딥러닝 아키텍처</h3>
+        <ul class="tight">
+          <li><span class="k">시퀀스</span> — LSTM/GRU, Attention, Transformer</li>
+          <li><span class="k">그래프</span> — GNN, EGNN(동변성), pair-aware message passing</li>
+          <li><span class="k">자기지도학습</span> — DINO/SwAV 스타일 self-distillation (EMA teacher, centering, sharpening)</li>
+          <li><span class="k">3D 좌표 예측</span> — pair 표현, confidence 추정, best-of-K 예측</li>
+        </ul>
+      </div>
+
+      <div class="kcard wide rv">
+        <h3>LLM · 효율적 학습</h3>
+        <ul class="tight">
+          <li>QLoRA + gradient checkpointing + Unsloth + bf16 + Flash Attention 2 조합으로 <span class="k">제한된 VRAM(8GB)에서 7B급 파인튜닝</span></li>
+          <li>소형 모델(Llama 3.2, Qwen2.5, Phi-3.5, EXAONE, Kanana 등) 비교·선택 기준 이해</li>
+          <li>Mixed precision, 시퀀스 길이 제한, 시간·메모리 예산 관리</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 강점 ============ -->
+<section id="strengths">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="idx">[04]</span><h2>강점 요약</h2>
+      <span class="en">STRENGTHS</span><span class="rule"></span>
+    </div>
+
+    <div class="sgrid">
+      <div class="scard rv">
+        <h3>전 과정 경험</h3>
+        <p>문제 정의부터 제출까지 파이프라인 전체를 직접 반복 개선.</p>
+        <div class="ev">정의 → 전처리 → 모델링 → 튜닝 → 앙상블 → 제출</div>
+      </div>
+      <div class="scard rv">
+        <h3>폭넓은 도메인</h3>
+        <p>정형/시계열(매출·119 신고) + 고급 딥러닝(동변성 GNN·3D 좌표 예측) + 강화학습(DeepRacer).</p>
+        <div class="ev">TABULAR · TIME SERIES · GNN · RL</div>
+      </div>
+      <div class="scard rv">
+        <h3>엔지니어링 감각</h3>
+        <p>수치 안정성, 벡터화 최적화, 시간 예산 관리 등 실전 대회 노하우.</p>
+        <div class="ev">einsum ×100 가속 · FP16 · 시간 예산 조기 중단</div>
+      </div>
+      <div class="scard rv">
+        <h3>꾸준한 개선</h3>
+        <p>버전을 거듭하며 체계적으로 코드를 발전시킨 이력.</p>
+        <div class="vchain">
+          <span class="vnode">v11</span><span class="varr">→</span>
+          <span class="vnode">v12</span><span class="varr">→</span>
+          <span class="vnode">v30</span><span class="varr">→</span>
+          <span class="vnode last">v32</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 연락처 ============ -->
+<section id="contact">
+  <div class="wrap">
+    <div class="ccard rv">
+      <p class="eyebrow" style="margin-bottom:12px">CONTACT</p>
+      <h2>다음 예측을 함께 만들 준비가 되어 있습니다</h2>
+      <p>각 프로젝트의 코드·시각화 자료는 별도 페이지/저장소에서 확인하실 수 있습니다.</p>
+      <!-- TODO: 아래 3개 링크의 href를 본인 링크로 교체하세요 -->
+      <div class="links">
+        <a class="lbtn pri" href="mailto:your@email.com">이메일 보내기</a>
+        <a class="lbtn" href="https://github.com/tkdwl05" target="_blank" rel="noopener">GitHub ↗</a>
+        <a class="lbtn" href="#" target="_blank" rel="noopener">Notion 포트폴리오 ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">© 2026 AI/ML PORTFOLIO — designed as a forecast: observed → predicted</div>
+</footer>
+</main>
+
+<script>
+// 스크롤 진입 시 부드러운 등장 (모션 최소화 설정 시 CSS에서 비활성화됨)
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+},{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
